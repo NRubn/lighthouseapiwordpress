@@ -74,7 +74,7 @@ function my_plugin_settings_page(){
 		<tr valign="top">
 		    <th scope="row">Largest Contentful Paint Weight</th>
 		    <td>
-			<input type="number" name="my_plugin_settings[largest_contentful_paint_weight]" value="<?php echo esc_attr($larges_contentfile_paint_weight);?>" step="0.01" min="0" max="100" />
+			<input type="number" name="my_plugin_settings[largest_contentful_paint_weight]" value="<?php echo esc_attr($largest_contentful_paint_weight);?>" step="0.01" min="0" max="100" />
 		   </td>
 		</tr>
 		
@@ -181,11 +181,11 @@ function runPageSpeedTest() {
     	$total_blocking_time_weight = isset($options['total_blocking_time_weight']) ? $options['total_blocking_time_weight'] / 100 : 0.3;
     	$cumulative_layout_shift_weight = isset($options['cumulative_layout_weight']) ? $options['cumulative_layout_weight'] / 100 : 0.25;
 	
-	$first_contentful_paint = floatval($data['lighthouseResult']['audits']['first-contentful-paint']['displayValue']) ?? 0;
-	$speed_index = floatval($data['lighthouseResult']['audits']['speed-index']['displayValue']) ?? 0;
-	$largest_contentful_paint = floatval($data['lighthouseResult']['audits']['largest-contentful-paint']['displayValue']) ?? 0;
-	$total_blocking_time = floatval($data['lighthouseResult']['audits']['total-blocking-time']['displayValue']) ?? 0;
-	$cumulative_layout_shift = floatval($data['lighthouseResult']['audits']['cumulative-layout-shift']['displayValue']) ?? 0;
+	$first_contentful_paint = floatval($data['lighthouseResult']['audits']['first-contentful-paint']['displayValue'] ?? 0);
+	$speed_index = floatval($data['lighthouseResult']['audits']['speed-index']['displayValue'] ?? 0);
+	$largest_contentful_paint = floatval($data['lighthouseResult']['audits']['largest-contentful-paint']['displayValue'] ?? 0);
+	$total_blocking_time = floatval($data['lighthouseResult']['audits']['total-blocking-time']['displayValue'] ?? 0);
+	$cumulative_layout_shift = floatval($data['lighthouseResult']['audits']['cumulative-layout-shift']['displayValue'] ?? 0);
 
 	
 	$page_speed_score=(
@@ -250,17 +250,6 @@ function custom_result_page(){
     }
     echo '</div>';
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
