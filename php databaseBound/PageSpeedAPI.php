@@ -1,3 +1,4 @@
+
 <?php
 /*
 Plugin Name: PageSpeed Lighthouse Test
@@ -14,6 +15,7 @@ $URL_TO_TEST = "Enter Website";
 add_action('admin_menu', 'my_plugin_menu');
 add_action('admin_init', 'my_plugin_register_settings');
 add_action('admin_post_run_pagespeed_test', 'runPageSpeedTest');
+add_action('my_custom_pagespeed_event', 'runPageSpeedTest');
 
 function my_plugin_menu(){
     add_menu_page('My Plugin Settings', 'My Plugin', 'manage_options', 'my-plugin-settings', 'my_plugin_settings_page');
@@ -59,38 +61,38 @@ function my_plugin_settings_page(){
 		 <tr valign="top">  
  		    <th scope="row">Speed Index Weight</th>
 		    <td>
-			<input type="number" name="my_plugin_settings[speed_index_weight]" value="<?php echo esc_attr($first_contentful_paint_weight);?>" step="0.01" min="0" max="100" />
+			<input type="number" name="my_plugin_settings[speed_index_weight]" value="<?php echo esc_attr($speed_index_weight);?>" step="0.01" min="0" max="100" />
 		   </td>
 		</tr>
 		
 		<tr valign="top">
 		    <th scope="row">Largest Contentful Paint Weight</th>
 		    <td>
-			<input type="number" name="my_plugin_settings[largest_contentful_paint_weight]" value="<?php echo esc_attr($first_contentful_paint_weight);?>" step="0.01" min="0" max="100" />
+			<input type="number" name="my_plugin_settings[largest_contentful_paint_weight]" value="<?php echo esc_attr($larges_contentfile_paint_weight);?>" step="0.01" min="0" max="100" />
 		   </td>
 		</tr>
 		
 		<tr valign="top">
 		    <th scope="row">Total Blocking Time Weight</th>
 		    <td>
-			<input type="number" name="my_plugin_settings[total_blocking_time_weight]" value="<?php echo esc_attr($first_contentful_paint_weight);?>" step="0.01" min="0" max="100" />
+			<input type="number" name="my_plugin_settings[total_blocking_time_weight]" value="<?php echo esc_attr($total_blocking_time_weight);?>" step="0.01" min="0" max="100" />
 		   </td>
 		</tr>
 
 		<tr valign="top">
 		    <th scope="row">Cumulative Layout Shift Weight</th>
 		    <td>
-			<input type="number" name="my_plugin_settings[cumulative_layout_weight]" value="<?php echo esc_attr($first_contentful_paint_weight);?>" step="0.01" min="0" max="100" />
+			<input type="number" name="my_plugin_settings[cumulative_layout_weight]" value="<?php echo esc_attr($cumulative_layout_shift_weight);?>" step="0.01" min="0" max="100" />
 		   </td>
 		</tr>
-		/*
+		
 		<tr valign="top">
 		   <th scope="row">Wiederholung in Minuten</th>
 		   <td>
 		   	<input type="number" name"my_plugin_settings[repeat_interval]" value="<?php echo esc_attr($repeat_interval);?>" />
 		   </td>
 		</tr>
-*/
+
 	    </table>
         <input type="hidden" name="action" value="run_pagespeed_test" />
             <?php submit_button('Start PageSpeed-Test'); ?>
@@ -106,7 +108,8 @@ function create_custom_table(){
     $charset_collate = $wpdb->get_charset_collate();
     if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) {
         $sql = "CREATE TABLE $table_name (
-            id int(11) NOT NULL AUTO_INCREMENT,
+	    id int(11) NOT NULL AUTO_INCREMENT,
+	    url_to_test varchar(255) NOT NULL,
 	    first_contentful_paint varchar(255) NOT NULL,
 	    speed_index varchar(255) NOT NULL,
 	    largest_contentful_paint varchar(255) NOT NULL,
@@ -124,9 +127,6 @@ function create_custom_table(){
 
 register_activation_hook(__FILE__, 'my_plugin_activate');
 
-function my_plugin_activate(){
-  create_custom_table();
-}
 
 function save_json_data_to_db($json_data){
     global $wpdb;
@@ -153,6 +153,7 @@ function get_data_from_db(){
     return false;
 }
 
+
 function runPageSpeedTest() {
     global $API_KEY, $URL_TO_TEST;
 
@@ -165,7 +166,7 @@ function runPageSpeedTest() {
 
     try {
         $response = file_get_contents("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=$URL_TO_TEST&key=$API_KEY");
-	$data = json_decode($response, true);
+	      $data = json_decode($response, true);
 
 	$options = get_option('my_plugin_settings');
     	$first_contentful_paint_weight = isset($options['first_contentful_paint_weight']) ? $options['first_contentful_paint_weight'] / 100 : 0.1; 
@@ -173,7 +174,6 @@ function runPageSpeedTest() {
     	$largest_contentful_paint_weight = isset($options['largest_contentful_paint_weight']) ? $options['largest_contentful_paint_weight'] / 100 : 0.25; 
     	$total_blocking_time_weight = isset($options['total_blocking_time_weight']) ? $options['total_blocking_time_weight'] / 100 : 0.3;
     	$cumulative_layout_shift_weight = isset($options['cumulative_layout_weight']) ? $options['cumulative_layout_weight'] / 100 : 0.25;
-	$repeat_interval = isset($options['repeat_interval']) ? interval($options['$repeat_interval']) : 0; 
 	
 	$first_contentful_paint = floatval($data['lighthouseResult']['audits']['first-contentful-paint']['displayValue']) ?? 0;
 	$speed_index = floatval($data['lighthouseResult']['audits']['speed-index']['displayValue']) ?? 0;
@@ -181,9 +181,6 @@ function runPageSpeedTest() {
 	$total_blocking_time = floatval($data['lighthouseResult']['audits']['total-blocking-time']['displayValue']) ?? 0;
 	$cumulative_layout_shift = floatval($data['lighthouseResult']['audits']['cumulative-layout-shift']['displayValue']) ?? 0;
 
-	if($repeat_interval > 0){
-		wp_schdule_event(time() + $repeat_interval * 60, 'my_custom_pagespeed_event','run_pagespeed_test');
-	}	
 	
 	$page_speed_score=(
 		$first_contentful_paint * $first_contentful_paint_weight +
@@ -197,6 +194,7 @@ function runPageSpeedTest() {
 	$table_name = $wpdb->prefix . 'my_plugin_data';
 
 	$result = $wpdb->insert($table_name, array(
+		'url_to_test' => $URL_TO_TEST,
 		'first_contentful_paint' => $first_contentful_paint,
 		'speed_index' => $speed_index,
 		'largest_contentful_paint' => $largest_contentful_paint,
@@ -216,6 +214,22 @@ function runPageSpeedTest() {
     }
 }
 
+
+function schedulePageSpeedTestRepeating(){
+	$options = get_option('my_plugin_settings');
+	$repeat_interval = isset($options['repeat_interval']) ? interval($options['$repeat_interval']) : 0; 
+
+	if($repeat_interval > 0){
+		wp_schdule_event(time() + $repeat_interval * 60, 'my_custom_pagespeed_event','run_pagespeed_test');
+	}	
+}
+
+
+function my_plugin_activate(){
+	create_custom_table();
+	schedulePageSpeedTestRepeating();
+}
+
 function custom_result_page(){
     echo '<div class="wrap">';
     echo '<h2>PageSpeed Test Ergebnisse</h2>';
@@ -230,6 +244,9 @@ function custom_result_page(){
     }
     echo '</div>';
 }
+
+
+
 
 
 
