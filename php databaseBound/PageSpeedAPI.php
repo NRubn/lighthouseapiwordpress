@@ -1,4 +1,3 @@
-
 <?php
 /*
 Plugin Name: PageSpeed Lighthouse Test
@@ -31,6 +30,13 @@ function my_plugin_settings_page(){
     $api_key = isset($options['api_key']) ? $options['api_key'] : '';
     $url_to_test = isset($options['url_to_test']) ? $options['url_to_test'] : '';
 
+    $first_contentful_paint_weight = '';
+    $speed_index_weight = '';
+    $largest_contentful_paint_weight = '';
+    $total_blocking_time_weight = '';
+    $cumulative_layout_shift_weight = '';
+    $repeat_interval = '';
+  
     ?>
     <div class="wrap">
         <h2>My Plugin Settings</h2>
@@ -166,7 +172,7 @@ function runPageSpeedTest() {
 
     try {
         $response = file_get_contents("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=$URL_TO_TEST&key=$API_KEY");
-	      $data = json_decode($response, true);
+	$data = json_decode($response, true);
 
 	$options = get_option('my_plugin_settings');
     	$first_contentful_paint_weight = isset($options['first_contentful_paint_weight']) ? $options['first_contentful_paint_weight'] / 100 : 0.1; 
@@ -244,6 +250,10 @@ function custom_result_page(){
     }
     echo '</div>';
 }
+
+
+
+
 
 
 
