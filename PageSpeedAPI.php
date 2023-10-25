@@ -17,7 +17,7 @@ add_action('admin_post_run_pagespeed_test', 'runPageSpeedTest');
 add_action('my_custom_pagespeed_event', 'runPageSpeedTest');
 
 function bal_lighthouse_menu(){
-    add_menu_page('BaL Lighthouse Settings', 'BaL Lighthouse', 'manage_options', 'bal-lighthouse-settings', 'bal_lighthouse_settings_page');
+    add_menu_page('BaL Lighthouse Settings', 'BaL Lighthouse', 'manage_options', 'bal-lighthouse-settings', 'bal_lighthouse_settings_page', 'dashicons-welcome-view-site');
     add_submenu_page('bal-lighthouse-settings', 'PageSpeed Ergebnisse', 'PageSpeed Ergebnisse', 'manage_options', 'page-speed-results', 'custom_result_page');
 }
 
@@ -40,6 +40,9 @@ function bal_lighthouse_settings_page(){
     ?>
     <div class="wrap">
         <h2>Bal Lighthouse Settings</h2>
+
+		<p>Unter diesem Link kann ein API Schlüssel angefordert werden</p>
+		<p>Link: <a href="https://developers.google.com/speed/docs/insights/v5/get-started?hl=de">developers.google.com</a></p>
         <form method="post" action="<?php echo admin_url( 'admin-post.php' ); ?>">
            
             <table class="form-table">
@@ -223,7 +226,7 @@ function runPageSpeedTest() {
 
 function schedulePageSpeedTestRepeating(){
 	$options = get_option('bal_lighthouse_settings');
-	$repeat_interval = isset($options['repeat_interval']) ? interval($options['$repeat_interval']) : 0; 
+	$repeat_interval = isset($options['repeat_interval']) ? interval($options['repeat_interval']) : 0;
 
 	if($repeat_interval > 0){
 		wp_schedule_event(time() + $repeat_interval * 60, 'bal_lighthouse_pagespeed_event','run_pagespeed_test');
